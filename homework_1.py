@@ -1,40 +1,15 @@
 # %%
-%load_ext autoreload
-%autoreload 2
+# %load_ext autoreload
+# %autoreload 2
 
-import iml  # helper functions and classes (see iml/)
+import matplotlib.pyplot as plt  # making plots
 import numpy as np  # array processing
 import pandas as pd  # dataframes, reading files
-import matplotlib.pyplot as plt  # making plots
+
+import iml  # helper functions and classes (see iml/)
 
 # %% [markdown]
 # **Group members:** [your names]
-
-# %% [markdown]
-# ## Part 1: Partial Derivatives
-
-# %% [markdown]
-# ### (a)
-# > Compute the derivative $\partial L / \partial x(i).$ Leaving all other
-# > variables fixed, what value of $x(i)$ minimizes $L$?
-
-# %% [markdown]
-# ### (b)
-# > Compute the derivative $\partial L / \partial \mu.$ If $\lambda = 0,$ what
-# > values of $\mu$ minimize $L$?
-
-# %% [markdown]
-# ### (c)
-# > Compute the derivative $\partial L / \partial \theta.$
-
-# %% [markdown]
-# ### (d)
-# > Compute $$
-# > \frac{\partial}{\partial z_i} \ln \operatorname{softmax}(z)_j.
-# > $$
-# > (Hint: first define $Z = \ln \sum_{j = 1}^k e^{z_j}$ and compute
-# > $\partial Z / \partial z_j.$)
-
 
 # %% [markdown]
 # ## Part 2: Linear Regression
@@ -48,6 +23,64 @@ import matplotlib.pyplot as plt  # making plots
 # > $i.$ Express the gradient $\nabla L$ of mean squared error as a function of
 # > the parameter vector $\theta$ and the datapoints $(x(i), y(i)).$
 
+
+x, y = iml.load_powerplant()
+# print(x, y)
+
+
+def predict_linear(theta, x):
+    """
+    Compute predictions for:
+        y_hat[i] = theta[0] + theta[1] * x[i]
+    """
+    theta0 = theta[0]
+    theta1 = theta[1]
+
+    # TODO: calculate theta0 + theta1 times every element of x
+    y_hat = theta0 + theta1 * x
+    return y_hat
+
+
+def mean_squared_error(theta, x, y):
+    """
+    Compute:
+        L = (1 / N) * sum((y_hat[i] - y[i])**2)
+    """
+    y_hat = predict_linear(theta, x)
+    residuals = y_hat - y  # TODO: prediction minus target
+    loss = (1 / len(y)) * (residuals**2)  # TODO: mean of squared residuals
+
+    return loss
+
+
+def mse_gradient(theta, x, y):
+    """
+    Return the gradient as a NumPy array with shape (2,):
+
+        gradient[0] = dL/dtheta_0
+        gradient[1] = dL/dtheta_1
+    """
+    n = len(x)
+    y_hat = predict_linear(theta, x)
+    residuals = y_hat - y  # TODO
+
+    dL_dtheta0 = (2 / n) * np.sum(
+        residuals
+    )  # TODO: sum the contribution from each datapoint
+    dL_dtheta1 = (2 / n) * np.sum(
+        residuals * x
+    )  # TODO: determine the extra factor introduced by theta_1
+
+    gradient = np.array(
+        [
+            dL_dtheta0,
+            dL_dtheta1,
+        ]
+    )
+
+    return gradient
+
+
 # %% [markdown]
 # ### (b)
 # > Extend the `SimpleRegressor` class from `iml/simple_regressor.py`,
@@ -57,26 +90,53 @@ import matplotlib.pyplot as plt  # making plots
 # > `SimpleRegressor.show_training()`. Find a learning rate that makes the loss
 # > decrease.
 
+from iml import SimpleRegressor
+
+
+class GradientDescentRegressor(SimpleRegressor):
+    def __init__(self):
+        pass
+
+    def fit(self, x, y, lr: float, steps: int = 20) -> None:
+        self.weights_ = np.zeros(2)
+
+        self.x_train_ = x.copy()
+        self.y_train_ = y.copy()
+        self.y_predicted_ = np.zeros((steps + 1, y.shape[0]))
+        self.y_predicted_[0] = self.predict(x)
+
+        for i in range(steps):
+            residuals = self.predict(x) - y
+
+            # Gradient of MSE with respect to [intercept, slope]
+            gradient = np.array(
+                [
+                    2 * residuals.mean(),
+                    2 * np.mean(residuals * x),
+                ]
+            )
+
+            self.weights_ -= lr * gradient
+            self.y_predicted_[i + 1] = self.predict(x)
+
+
+model = GradientDescentRegressor()
+model.fit(x, y, lr=0.0001, steps=20)
+model.show_training()
+
+
 # %% [markdown]
 # ### (c)
 # > Now, normalize your data in some way and run `fit()` and `show_training()`
 # > again, ensuring that you converge to an acceptable model in 20 iterations.
 
 
-# %% [markdown]
-# ## Part 3: k-Means and PCA
+x_mean, x_std = x.mean(), x.std()
+y_mean, y_std = y.mean(), y.std()
 
-# %% [markdown]
-# ### (a)
-# > Suppose we didn't have access to the species attribute of the iris dataset.
-# > Implement the Lloyd-Forgy algorithm for $k$-means and use it to infer a
-# > partition of the iris dataset into three species. Compute the confusion
-# > matrix and the accuracy of the partition relative to the true species.
+x_norm = (x - x_mean) / x_std
+y_norm = (y - y_mean) / y_std
 
-# %% [markdown]
-# ### (b)
-# > Investigate `data/ulu.csv` using PCA and explain how this dataset was
-# > produced. Using scikit-learn, run both $k$-means clustering and DBSCAN on
-# > this dataset. Which method produces more reasonable "clusters"?
-
-
+model = GradientDescentRegressor()
+model.fit(x_norm, y_norm, lr=0.3, steps=20)
+model.show_training()

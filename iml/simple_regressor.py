@@ -1,7 +1,7 @@
-from matplotlib.colors import Normalize
-from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.collections import LineCollection
+from matplotlib.colors import Normalize
 
 
 class SimpleRegressor:
@@ -39,7 +39,9 @@ def show_regression_training_(x_train, y_train, y_predicted):
 
     # MSE loss
     loss = np.pow(y_predicted - y_train, 2).mean(axis=-1)
-    loss_ax.set(title="MSE loss", ylabel="loss", xlabel="iteration", ylim=(0, loss.max() * 1.1))
+    loss_ax.set(
+        title="MSE loss", ylabel="loss", xlabel="iteration", ylim=(0, loss.max() * 1.1)
+    )
     loss_ax.set_box_aspect(1)
     loss_ax.plot(loss)
     loss_ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
@@ -62,4 +64,4 @@ def show_regression_training_(x_train, y_train, y_predicted):
 
     plt.colorbar(lc, ax=graph_ax, label="iteration")
     plt.legend()
-    plt.show(fig)
+    plt.show()  # plt.show(fig) to plt.show()
