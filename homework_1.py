@@ -24,7 +24,7 @@ import iml  # helper functions and classes (see iml/)
 # > the parameter vector $\theta$ and the datapoints $(x(i), y(i)).$
 
 
-x, y = iml.load_powerplant()
+# x, y = iml.load_powerplant()
 # print(x, y)
 
 
@@ -95,10 +95,12 @@ from iml import SimpleRegressor
 
 class GradientDescentRegressor(SimpleRegressor):
     def __init__(self):
-        pass
+        self.weights_ = np.zeros(2)
+
+    def predict(self, x):
+        return self.weights_[0] + x * self.weights_[1]
 
     def fit(self, x, y, lr: float, steps: int = 20) -> None:
-        self.weights_ = np.zeros(2)
 
         self.x_train_ = x.copy()
         self.y_train_ = y.copy()
@@ -106,30 +108,34 @@ class GradientDescentRegressor(SimpleRegressor):
         self.y_predicted_[0] = self.predict(x)
 
         for i in range(steps):
-            residuals = self.predict(x) - y
-
             # Gradient of MSE with respect to [intercept, slope]
-            gradient = np.array(
-                [
-                    2 * residuals.mean(),
-                    2 * np.mean(residuals * x),
-                ]
-            )
+            errors = self.y_predicted_[i] - y
 
-            self.weights_ -= lr * gradient
+            gradient_theta0 = 2 * np.mean(errors)
+            gradient_theta1 = 2 * np.mean(errors * x)
+
+            self.weights_[0] -= lr * gradient_theta0
+            self.weights_[1] -= lr * gradient_theta1
+
             self.y_predicted_[i + 1] = self.predict(x)
 
 
+x, y = iml.load_powerplant()
 model = GradientDescentRegressor()
 model.fit(x, y, lr=0.0001, steps=20)
 model.show_training()
-
+# losses = [np.mean((pred - y) ** 2) for pred in model.y_predicted_]
+# print(losses)
+# print(model.weights_)
+# print("final loss =", np.mean((model.predict(x) - y) ** 2))
+# print(x[:10])
+# print(y[:10])
+# print(np.corrcoef(x, y)[0, 1])
 
 # %% [markdown]
 # ### (c)
 # > Now, normalize your data in some way and run `fit()` and `show_training()`
 # > again, ensuring that you converge to an acceptable model in 20 iterations.
-
 
 x_mean, x_std = x.mean(), x.std()
 y_mean, y_std = y.mean(), y.std()
